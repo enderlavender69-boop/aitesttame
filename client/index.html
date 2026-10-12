@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Tamers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background: #1a1a2e;
+      font-family: 'Monospace', monospace;
+    }
+    canvas {
+      display: block;
+    }
+    #debug-overlay {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0f0;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      border-radius: 4px;
+      font-family: 'Monospace', monospace;
+      z-index: 1000;
+      pointer-events: none;
+      display: none;
+    }
+    #debug-overlay.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <div id="debug-overlay">
+    <div>FPS: <span id="debug-fps">0</span></div>
+    <div>Server TPS: <span id="debug-tps">0</span></div>
+    <div>Ping: <span id="debug-ping">0</span>ms</div>
+    <div>Players: <span id="debug-players">0</span></div>
+    <div>Pos: <span id="debug-pos">0, 0</span></div>
+  </div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
