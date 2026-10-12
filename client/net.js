@@ -21,7 +21,6 @@ export class Network {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('Connected to server');
       this.reconnectAttempts = 0;
       this.startPingInterval();
     };
@@ -32,13 +31,11 @@ export class Network {
     };
 
     this.ws.onclose = () => {
-      console.log('Disconnected from server');
       this.stopPingInterval();
       this.attemptReconnect();
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
     };
   }
 
@@ -46,10 +43,7 @@ export class Network {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-      console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
       setTimeout(() => this.connect(), delay);
-    } else {
-      console.error('Max reconnect attempts reached');
     }
   }
 
