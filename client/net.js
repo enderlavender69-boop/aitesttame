@@ -86,6 +86,90 @@ export class Network {
     }
   }
 
+  sendAttack() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'attack' }));
+    }
+  }
+
+  sendShoot() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'shoot' }));
+    }
+  }
+
+  sendGather(targetId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'gather', targetId }));
+    }
+  }
+
+  sendCraft(recipeId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'craft', recipeId }));
+    }
+  }
+
+  sendPlaceStructure(structureId, x, y, rotation = 0) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'place_structure', structureId, x, y, rotation }));
+    }
+  }
+
+  sendTame(targetId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'tame', targetId }));
+    }
+  }
+
+  sendTameAttempt(targetId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'tame_attempt', targetId }));
+    }
+  }
+
+  sendEquipTool(toolId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'equip_tool', toolId }));
+    }
+  }
+
+  sendEquipStructure(structureId) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'equip_structure', structureId }));
+    }
+  }
+
+  sendTogglePvP(enabled) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'toggle_pvp', enabled }));
+    }
+  }
+
+  sendAddPetToActive(petId, slot) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'add_pet_to_active', petId, slot }));
+    }
+  }
+
+  sendSwapPet(activeIndex, benchIndex) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'swap_pet', activeIndex, benchIndex }));
+    }
+  }
+
+  sendSpendAttribute(attribute, amount) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'spend_attribute', attribute, amount }));
+    }
+  }
+
+  sendClaimLevelUpReward(rewardIndex) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'claim_level_up_reward', rewardIndex }));
+    }
+  }
+
   update(deltaTime) {
   }
 }
