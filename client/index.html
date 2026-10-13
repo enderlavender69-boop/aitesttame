@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Tamers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background: #1a1a2e;
+      font-family: 'Monospace', monospace;
+      color: #fff;
+    }
+    canvas {
+      display: block;
+    }
+    #debug-overlay {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0f0;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      border-radius: 4px;
+      font-family: 'Monospace', monospace;
+      z-index: 1000;
+      pointer-events: none;
+      display: none;
+    }
+    #debug-overlay.visible {
+      display: block;
+    }
+
+    #start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      color: #fff;
+    }
+    #start-screen.hidden {
+      display: none;
+    }
+    #start-screen h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #ffcc00;
+      text-shadow: 0 0 20px #ffcc00;
+    }
+    #start-screen input {
+      padding: 12px 20px;
+      font-size: 18px;
+      background: #2a2a4a;
+      border: 2px solid #4a4a6a;
+      color: #fff;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      width: 300px;
+      text-align: center;
+    }
+    #start-screen input:focus {
+      outline: none;
+      border-color: #ffcc00;
+    }
+    #start-screen button {
+      padding: 14px 40px;
+      font-size: 18px;
+      background: #2d7a2d;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #start-screen button:hover {
+      background: #3d9a3d;
+    }
+
+    #hud {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 10px;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.9));
+      z-index: 100;
+      pointer-events: none;
+    }
+    #hud > * {
+      pointer-events: auto;
+    }
+    .hud-left {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      padding-left: 20px;
+    }
+    .hud-right {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      padding-right: 20px;
+      justify-content: flex-end;
+    }
+    .hud-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .health-bar-container {
+      width: 200px;
+      height: 24px;
+      background: #1a1a2e;
+      border: 2px solid #3a3a5a;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .health-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00cc00, #88cc00);
+      transition: width 0.3s, background 0.3s;
+    }
+    .health-bar-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      text-shadow: 0 0 4px #000;
+    }
+
+    .xp-bar-container {
+      width: 300px;
+      height: 8px;
+      background: #1a1a2e;
+      border: 1px solid #3a3a5a;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8844ff, #cc88ff);
+      transition: width 0.3s;
+    }
+
+    .resource-display {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid #3a3a5a;
+    }
+    .resource-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+    .resource-icon.wood { background: #4a3728; }
+    .resource-icon.stone { background: #5a5a5a; }
+    .resource-icon.food { background: #2d6a2d; }
+    .resource-icon.gold { background: #ffcc00; }
+
+    .hotbar {
+      display: flex;
+      gap: 4px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 6px;
+      border: 1px solid #3a3a5a;
+    }
+    .hotbar-slot {
+      width: 48px;
+      height: 48px;
+      background: #1a1a2e;
+      border: 2px solid #3a3a5a;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .hotbar-slot:hover, .hotbar-slot.active {
+      border-color: #ffcc00;
+    }
+    .hotbar-slot.empty {
+      opacity: 0.5;
+    }
+    .hotbar-slot .icon {
+      font-size: 20px;
+    }
+    .hotbar-slot .count {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 10px;
+      color: #fff;
+    }
+    .hotbar-slot .keybind {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 10px;
+      color: #888;
+    }
+
+    .pet-slots {
+      display: flex;
+      gap: 4px;
+      padding: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      border: 1px solid #3a3a5a;
+    }
+    .pet-slot {
+      width: 36px;
+      height: 36px;
+      background: #1a1a2e;
+      border: 2px solid #3a3a5a;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+    .pet-slot.active {
+      border-color: #00cc00;
+    }
+    .pet-slot .element {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #000;
+    }
+    .pet-slot .hp {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      font-size: 8px;
+      background: #c00;
+      color: #fff;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .minimap {
+      width: 150px;
+      height: 150px;
+      background: #0a0a1a;
+      border: 2px solid #3a3a5a;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .minimap canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #crafting-menu {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      max-height: 80vh;
+      background: rgba(20, 20, 40, 0.98);
+      border: 2px solid #4a4a6a;
+      border-radius: 8px;
+      padding: 20px;
+      z-index: 1500;
+      display: none;
+      overflow-y: auto;
+      color: #fff;
+    }
+    #crafting-menu.visible {
+      display: block;
+    }
+    #crafting-menu h2 {
+      margin-bottom: 15px;
+      color: #ffcc00;
+      border-bottom: 1px solid #4a4a6a;
+      padding-bottom: 10px;
+    }
+    .crafting-category {
+      margin-bottom: 20px;
+    }
+    .crafting-category h3 {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .recipe-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid #3a3a5a;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .recipe-item:hover {
+      border-color: #ffcc00;
+    }
+    .recipe-item.cannot-craft {
+      opacity: 0.5;
+    }
+    .recipe-icon {
+      width: 40px;
+      height: 40px;
+      background: #1a1a2e;
+      border: 1px solid #3a3a5a;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .recipe-info {
+      flex: 1;
+    }
+    .recipe-name {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    .recipe-desc {
+      font-size: 11px;
+      color: #888;
+    }
+    .recipe-costs {
+      display: flex;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .recipe-cost {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    #inventory {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      max-height: 80vh;
+      background: rgba(20, 20, 40, 0.98);
+      border: 2px solid #4a4a6a;
+      border-radius: 8px;
+      padding: 20px;
+      z-index: 1500;
+      display: none;
+      overflow-y: auto;
+      color: #fff;
+    }
+    #inventory.visible {
+      display: block;
+    }
+    #inventory h2 {
+      margin-bottom: 15px;
+      color: #ffcc00;
+      border-bottom: 1px solid #4a4a6a;
+      padding-bottom: 10px;
+    }
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+    .inventory-slot {
+      width: 48px;
+      height: 48px;
+      background: #1a1a2e;
+      border: 1px solid #3a3a5a;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .inventory-slot .icon {
+      font-size: 20px;
+    }
+    .inventory-slot .count {
+      font-size: 10px;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    #death-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      color: #fff;
+      display: none;
+    }
+    #death-screen.visible {
+      display: flex;
+    }
+    #death-screen h1 {
+      font-size: 48px;
+      color: #cc0000;
+      margin-bottom: 20px;
+    }
+    #death-screen p {
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+    #death-screen button {
+      padding: 14px 40px;
+      font-size: 18px;
+      background: #cc0000;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #death-screen button:hover {
+      background: #ee0000;
+    }
+
+    #leaderboard {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 250px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid #3a3a5a;
+      border-radius: 4px;
+      padding: 10px;
+      z-index: 100;
+      color: #fff;
+      display: none;
+    }
+    #leaderboard.visible {
+      display: block;
+    }
+    #leaderboard h3 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .leaderboard-entry {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #2a2a4a;
+      font-size: 12px;
+    }
+    .leaderboard-entry:last-child {
+      border-bottom: none;
+    }
+    .leaderboard-entry.me {
+      color: #ffcc00;
+      font-weight: bold;
+    }
+
+    .tame-prompt {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #ffcc00;
+      border-radius: 8px;
+      padding: 20px 40px;
+      z-index: 1000;
+      display: none;
+      text-align: center;
+    }
+    .tame-prompt.visible {
+      display: block;
+    }
+    .tame-prompt h3 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+    .tame-progress {
+      width: 200px;
+      height: 10px;
+      background: #1a1a2e;
+      border: 1px solid #3a3a5a;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px auto;
+    }
+    .tame-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ffcc00, #ff8800);
+      transition: width 0.1s;
+    }
+    .tame-chance {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .level-up-screen {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      background: rgba(20, 20, 40, 0.98);
+      border: 2px solid #ffcc00;
+      border-radius: 8px;
+      padding: 20px;
+      z-index: 2000;
+      display: none;
+      color: #fff;
+      text-align: center;
+    }
+    .level-up-screen.visible {
+      display: block;
+    }
+    .level-up-screen h2 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+    .level-up-screen p {
+      margin-bottom: 20px;
+    }
+    .reward-choices {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .reward-choice {
+      width: 100px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #3a3a5a;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .reward-choice:hover {
+      border-color: #ffcc00;
+    }
+    .reward-choice .icon {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    .reward-choice .name {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    .reward-choice .desc {
+      font-size: 10px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <div id="start-screen">
+    <h1>Pet Tamers</h1>
+    <input type="text" id="name-input" placeholder="Enter your name" maxlength="16">
+    <button id="play-btn">Play</button>
+  </div>
+
+  <div id="hud">
+    <div class="hud-left">
+      <div>
+        <div class="health-bar-container">
+          <div class="health-bar-fill" id="health-bar" style="width: 100%"></div>
+          <div class="health-bar-text" id="health-text">100/100</div>
+        </div>
+        <div class="xp-bar-container">
+          <div class="xp-bar-fill" id="xp-bar" style="width: 0%"></div>
+        </div>
+        <div style="font-size: 11px; color: #888; margin-top: 2px;" id="level-text">Level 1</div>
+      </div>
+      <div class="resource-display" id="resource-display">
+        <div class="resource-item">
+          <div class="resource-icon wood"></div>
+          <span id="wood-count">0</span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon stone"></div>
+          <span id="stone-count">0</span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon food"></div>
+          <span id="food-count">0</span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon gold"></div>
+          <span id="gold-count">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="hud-center">
+      <div class="hotbar" id="hotbar">
+        <div class="hotbar-slot" data-slot="0"><span class="keybind">1</span><span class="icon">⛏</span></div>
+        <div class="hotbar-slot" data-slot="1"><span class="keybind">2</span><span class="icon">🪓</span></div>
+        <div class="hotbar-slot" data-slot="2"><span class="keybind">3</span><span class="icon">🧱</span></div>
+        <div class="hotbar-slot" data-slot="3"><span class="keybind">4</span><span class="icon">🌵</span></div>
+        <div class="hotbar-slot" data-slot="4"><span class="keybind">5</span><span class="icon">🔥</span></div>
+      </div>
+      <div class="pet-slots" id="pet-slots">
+        <div class="pet-slot" data-slot="0" title="Active Pet 1"></div>
+        <div class="pet-slot" data-slot="1" title="Active Pet 2"></div>
+        <div class="pet-slot" data-slot="2" title="Active Pet 3"></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="minimap" id="minimap">
+        <canvas id="minimap-canvas" width="150" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="crafting-menu">
+    <h2>Crafting</h2>
+    <div class="crafting-category" id="tools-category">
+      <h3>Tools</h3>
+      <div id="tools-recipes"></div>
+    </div>
+    <div class="crafting-category" id="structures-category">
+      <h3>Structures</h3>
+      <div id="structures-recipes"></div>
+    </div>
+  </div>
+
+  <div id="inventory">
+    <h2>Inventory</h2>
+    <div class="inventory-grid" id="inventory-grid"></div>
+  </div>
+
+  <div id="death-screen">
+    <h1>YOU DIED</h1>
+    <p id="death-stats">You survived for 0 minutes</p>
+    <button id="respawn-btn">Respawn</button>
+  </div>
+
+  <div id="leaderboard">
+    <h3>Leaderboard</h3>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <div id="debug-overlay">
+    <div>FPS: <span id="debug-fps">0</span></div>
+    <div>Server TPS: <span id="debug-tps">0</span></div>
+    <div>Ping: <span id="debug-ping">0</span>ms</div>
+    <div>Players: <span id="debug-players">0</span></div>
+    <div>Pos: <span id="debug-pos">0, 0</span></div>
+  </div>
+
+  <div class="tame-prompt" id="tame-prompt">
+    <h3>Taming <span id="tame-target-name">Animal</span></h3>
+    <div class="tame-progress">
+      <div class="tame-progress-fill" id="tame-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="tame-chance">Success chance: <span id="tame-chance">0%</span></div>
+    <div>Press F to attempt taming</div>
+  </div>
+
+  <div class="level-up-screen" id="level-up-screen">
+    <h2>Level Up! <span id="new-level">2</span></h2>
+    <p>Choose a reward:</p>
+    <div class="reward-choices" id="reward-choices"></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
